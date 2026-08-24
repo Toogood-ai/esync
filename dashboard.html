@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — eSync</title>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -19,11 +18,9 @@
 </div>
 
 <div class="dash-shell">
-
     <aside class="dash-sidebar" id="dashSidebar">
-        <a href="index.html" class="brand" aria-label="eSync home">
-            <img src="eSynxd.logo.png" class="brand-mark" alt=""
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <a href="index.html" class="brand">
+            <img src="eSynxd.logo.png" class="brand-mark" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <span class="brand-mark-fallback" style="display:none;">eS</span>
             <span class="brand-name">eSync</span>
         </a>
@@ -31,8 +28,10 @@
         <nav class="dash-nav">
             <button class="dash-nav-item active" data-tab="home"><i class="fa-solid fa-house"></i> Home</button>
             <button class="dash-nav-item" data-tab="calendar"><i class="fa-solid fa-calendar-days"></i> Calendar</button>
+            <button class="dash-nav-item" data-tab="timetable"><i class="fa-solid fa-clock"></i> Timetable</button>
+            <button class="dash-nav-item" data-tab="homework"><i class="fa-solid fa-book"></i> Homework</button>
+            <button class="dash-nav-item" data-tab="messages"><i class="fa-solid fa-envelope"></i> Messages</button>
             <button class="dash-nav-item" data-tab="badge"><i class="fa-solid fa-bus"></i> Bus badge</button>
-            <button class="dash-nav-item" data-tab="messages"><i class="fa-solid fa-message"></i> Messages</button>
             <button class="dash-nav-item" data-tab="profile"><i class="fa-solid fa-user"></i> Profile</button>
         </nav>
 
@@ -52,7 +51,6 @@
     </button>
 
     <main class="dash-main">
-
         <header class="dash-header">
             <h1 id="dashTitle">Home</h1>
             <span class="role-pill" id="rolePill">—</span>
@@ -60,51 +58,62 @@
 
         <!-- HOME -->
         <section class="tab-panel active" id="panel-home">
-            <div class="stat-grid" id="homeStats"></div>
-            <div class="home-columns">
-                <div class="panel-card">
-                    <h3><i class="fa-solid fa-calendar-day"></i> Today &amp; upcoming</h3>
-                    <div id="homeUpcoming" class="upcoming-list"><p class="muted-note">Loading…</p></div>
+            <div class="home-grid">
+                <div class="home-card">
+                    <h3><i class="fa-solid fa-calendar-check"></i> Today</h3>
+                    <div id="homeToday"></div>
                 </div>
-                <div class="panel-card">
-                    <h3><i class="fa-solid fa-inbox"></i> Recent messages</h3>
-                    <div id="homeMessages" class="upcoming-list"><p class="muted-note">Loading…</p></div>
+                <div class="home-card">
+                    <h3><i class="fa-solid fa-book-open"></i> Your homework</h3>
+                    <div id="homeHomework"></div>
+                </div>
+                <div class="home-card">
+                    <h3><i class="fa-solid fa-bell"></i> Announcements</h3>
+                    <div id="homeAnnouncements"></div>
+                </div>
+                <div class="home-card" data-role="teacher">
+                    <h3><i class="fa-solid fa-users-class"></i> Your class</h3>
+                    <div id="homeClass"></div>
                 </div>
             </div>
         </section>
 
-        <!-- CALENDAR -->
+        <!-- CALENDAR (Excursions/Events) -->
         <section class="tab-panel" id="panel-calendar">
             <div class="calendar-toolbar">
-                <div class="cal-nav">
-                    <button class="btn btn-ghost btn-icon" id="calPrev" aria-label="Previous month"><i class="fa-solid fa-chevron-left"></i></button>
-                    <h2 id="calMonthLabel">Month</h2>
-                    <button class="btn btn-ghost btn-icon" id="calNext" aria-label="Next month"><i class="fa-solid fa-chevron-right"></i></button>
-                </div>
-                <button class="btn btn-primary" id="calAddBtn" data-role="teacher" style="display:none;">
-                    <i class="fa-solid fa-plus"></i> New
+                <button class="btn btn-primary" id="calAddBtn" data-role="teacher">
+                    <i class="fa-solid fa-plus"></i> Add excursion
                 </button>
             </div>
-            <div class="cal-legend">
-                <span><i class="dot homework"></i> Homework</span>
-                <span><i class="dot exam"></i> Exam</span>
-                <span><i class="dot event"></i> Event</span>
-                <span><i class="dot announcement"></i> Announcement</span>
-            </div>
-            <div class="calendar-grid" id="calendarGrid"></div>
+            <div id="excursionsList" class="excursions-list"></div>
         </section>
 
-        <!-- BUS BADGE -->
-        <section class="tab-panel" id="panel-badge">
-            <div id="badgeContent"></div>
+        <!-- TIMETABLE -->
+        <section class="tab-panel" id="panel-timetable">
+            <div class="timetable-toolbar">
+                <button class="btn btn-primary" id="ttEditBtn" data-role="teacher">
+                    <i class="fa-solid fa-edit"></i> Edit timetable
+                </button>
+            </div>
+            <div class="timetable-grid" id="timetableGrid"></div>
+        </section>
+
+        <!-- HOMEWORK -->
+        <section class="tab-panel" id="panel-homework">
+            <div class="homework-toolbar">
+                <button class="btn btn-primary" id="hwNewBtn" data-role="teacher">
+                    <i class="fa-solid fa-plus"></i> Assign homework
+                </button>
+            </div>
+            <div id="homeworkList" class="homework-list"></div>
         </section>
 
         <!-- MESSAGES -->
         <section class="tab-panel" id="panel-messages">
             <div class="messages-shell">
                 <div class="messages-list-col">
-                    <button class="btn btn-primary btn-block" id="newMessageBtn">
-                        <i class="fa-solid fa-pen"></i> New message
+                    <button class="btn btn-primary btn-block" id="newMessageBtn" data-role="teacher">
+                        <i class="fa-solid fa-pen"></i> Send message
                     </button>
                     <div id="messagesList" class="messages-list"></div>
                 </div>
@@ -112,6 +121,11 @@
                     <p class="muted-note">Select a message to read it.</p>
                 </div>
             </div>
+        </section>
+
+        <!-- BUS BADGE -->
+        <section class="tab-panel" id="panel-badge">
+            <div id="badgeContent"></div>
         </section>
 
         <!-- PROFILE -->
@@ -125,7 +139,7 @@
                         <div class="input-wrap"><i class="fa-solid fa-image"></i><input id="profPicture" type="text" placeholder="https://…"></div>
                     </div>
                 </div>
-                <div class="field">
+                <div class="field" id="profNameField">
                     <label for="profName">Display name</label>
                     <div class="input-wrap"><i class="fa-solid fa-signature"></i><input id="profName" type="text"></div>
                 </div>
@@ -134,51 +148,68 @@
                 <button class="btn btn-primary" id="profSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Save changes</button>
             </div>
         </section>
-
     </main>
 </div>
 
-<!-- Day zoom modal (calendar) -->
-<div class="modal-overlay" id="dayModal">
+<!-- MODALS -->
+<div class="modal-overlay" id="excursionModal">
     <div class="modal-panel">
         <div class="modal-head">
-            <h3 id="dayModalTitle">Day</h3>
-            <button class="modal-close" id="dayModalClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            <h3>Add excursion</h3>
+            <button class="modal-close" id="excursionModalClose"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="modal-body" id="dayModalBody"></div>
-        <div class="modal-body" id="dayModalForm" style="display:none;"></div>
+        <div class="modal-body" id="excursionModalBody"></div>
     </div>
 </div>
 
-<!-- Confirm modal (bus badge grant/revoke) -->
-<div class="modal-overlay" id="confirmModal">
-    <div class="modal-panel modal-panel-sm">
+<div class="modal-overlay" id="timetableModal">
+    <div class="modal-panel">
         <div class="modal-head">
-            <h3 id="confirmTitle">Confirm</h3>
-            <button class="modal-close" id="confirmClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            <h3>Edit period</h3>
+            <button class="modal-close" id="timetableModalClose"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="modal-body" id="confirmBody"></div>
+        <div class="modal-body" id="timetableModalBody"></div>
     </div>
 </div>
 
-<!-- New message modal -->
+<div class="modal-overlay" id="homeworkModal">
+    <div class="modal-panel">
+        <div class="modal-head">
+            <h3>Assign homework</h3>
+            <button class="modal-close" id="homeworkModalClose"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="homeworkModalBody"></div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="messageModal">
     <div class="modal-panel">
         <div class="modal-head">
-            <h3>New message</h3>
-            <button class="modal-close" id="messageModalClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            <h3>Send message</h3>
+            <button class="modal-close" id="messageModalClose"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="modal-body" id="messageModalBody"></div>
     </div>
 </div>
 
-<!-- Supabase JS client - MUST be loaded before auth.js -->
+<div class="modal-overlay" id="badgeModal">
+    <div class="modal-panel modal-panel-sm">
+        <div class="modal-head">
+            <h3 id="badgeModalTitle">Manage bus badge</h3>
+            <button class="modal-close" id="badgeModalClose"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="badgeModalBody"></div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/auth.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/calendar.js"></script>
-<script src="js/badges.js"></script>
+<script src="js/timetable.js"></script>
+<script src="js/homework.js"></script>
 <script src="js/messages.js"></script>
+<script src="js/badges.js"></script>
 <script src="js/profile.js"></script>
 </body>
 </html>
