@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eSync — School life, in sync</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="background">
+    <div class="blob one"></div>
+    <div class="blob two"></div>
+</div>
+
+<nav class="navbar">
+    <a href="index.html" class="brand" aria-label="eSync home">
+        <img src="eSynxd.logo.png" class="brand-mark" alt=""
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <span class="brand-mark-fallback" style="display:none;">eS</span>
+        <span class="brand-name">eSync</span>
+    </a>
+
+    <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="#planner">Planner</a></li>
+        <li><a href="#homework">Homework</a></li>
+        <li><a href="#communication">Communication</a></li>
+    </ul>
+
+    <div class="nav-actions" id="navActions">
+        <a href="login.html" class="btn btn-primary">Log in</a>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+</nav>
+
+<section class="hero">
+    <span class="eyebrow fade-down"><i class="fa-solid fa-graduation-cap"></i> Built for students</span>
+    <h1 class="fade-down">Everything school,<br><span>finally in one place.</span></h1>
+    <p class="fade-up">
+        eSync brings your timetable, homework, and class announcements together —
+        so nothing important gets lost between apps, group chats, and paper diaries.
+    </p>
+    <div class="hero-actions fade-up">
+        <a href="login.html" class="btn btn-primary">
+            <i class="fa-solid fa-right-to-bracket"></i> View the demo
+        </a>
+    </div>
+</section>
+
+<div class="cards">
+
+    <div class="card" id="planner">
+        <i class="fa-solid fa-calendar-days"></i>
+        <h3>Planner</h3>
+        <p>See every deadline, exam, and event on one timeline, colour-coded by subject.</p>
+    </div>
+
+    <div class="card" id="homework">
+        <i class="fa-solid fa-book-open"></i>
+        <h3>Homework</h3>
+        <p>Every assignment, due date, and attachment in one list — nothing hides in an inbox.</p>
+    </div>
+
+    <div class="card" id="communication">
+        <i class="fa-solid fa-comments"></i>
+        <h3>Communication</h3>
+        <p>Class announcements and messages reach you the moment they're posted.</p>
+    </div>
+
+</div>
+
+<footer class="footer">
+    &copy; 2026 eSync. Built by a student, for students.
+</footer>
+
+<!-- Supabase JS client - MUST be loaded before auth.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

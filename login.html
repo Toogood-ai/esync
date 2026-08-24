@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — eSync</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="background">
+    <div class="blob one"></div>
+    <div class="blob two"></div>
+</div>
+
+<nav class="navbar">
+    <a href="index.html" class="brand" aria-label="eSync home">
+        <img src="eSynxd.logo.png" class="brand-mark" alt=""
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <span class="brand-mark-fallback" style="display:none;">eS</span>
+        <span class="brand-name">eSync</span>
+    </a>
+
+    <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#planner">Planner</a></li>
+        <li><a href="index.html#homework">Homework</a></li>
+        <li><a href="index.html#communication">Communication</a></li>
+    </ul>
+
+    <div class="nav-actions" id="navActions">
+        <a href="login.html" class="btn btn-primary active">Log in</a>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+</nav>
+
+<div class="auth-wrap">
+    <div class="auth-card fade-up">
+        <div class="auth-head">
+            <h2>Welcome back</h2>
+            <p>Log in to view the eSync demo.</p>
+        </div>
+
+        <div class="form-msg error" id="formMsg">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="formMsgText"></span>
+        </div>
+
+        <form id="loginForm" novalidate>
+            <div class="field" id="emailField">
+                <label for="email">Email</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" placeholder="you@school.edu" autocomplete="email" required>
+                </div>
+                <p class="field-error">Enter a valid email address.</p>
+            </div>
+
+            <div class="field" id="passwordField">
+                <label for="password">Password</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+                    <button type="button" class="toggle-visibility" data-target="password">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <p class="field-error">Enter your password.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block auth-submit" id="submitBtn">
+                <i class="fa-solid fa-right-to-bracket"></i> Log in
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Supabase JS client - MUST be loaded before auth.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/auth.js"></script>
+<script>
+    document.querySelectorAll(".toggle-visibility").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const input = document.getElementById(btn.dataset.target);
+            const icon = btn.querySelector("i");
+            const show = input.type === "password";
+            input.type = show ? "text" : "password";
+            icon.classList.toggle("fa-eye");
+            icon.classList.toggle("fa-eye-slash");
+        });
+    });
+
+    const form = document.getElementById("loginForm");
+    const formMsg = document.getElementById("formMsg");
+    const formMsgText = document.getElementById("formMsgText");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function showFieldError(fieldId, show) {
+        document.getElementById(fieldId).classList.toggle("error", show);
+    }
+
+    function showFormMessage(text) {
+        formMsgText.textContent = text;
+        formMsg.classList.add("show");
+    }
+
+    function hideFormMessage() {
+        formMsg.classList.remove("show");
+    }
+
+    (async () => {
+        if (typeof getSession === "function" && (await getSession())) {
+            window.location.href = "dashboard.html";
+        }
+    })();
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        hideFormMessage();
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        showFieldError("emailField", !emailValid);
+        showFieldError("passwordField", password.length === 0);
+
+        if (!emailValid || password.length === 0) return;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging in...';
+
+        try {
+            await loginUser({ email, password });
+            window.location.href = "dashboard.html";
+        } catch (err) {
+            showFormMessage(err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Log in';
+        }
+    });
+</script>
+</body>
+</html>

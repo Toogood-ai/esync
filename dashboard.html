@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — eSync</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="dash-body">
+
+<div class="background">
+    <div class="blob one"></div>
+    <div class="blob two"></div>
+</div>
+
+<div class="dash-shell">
+
+    <aside class="dash-sidebar" id="dashSidebar">
+        <a href="index.html" class="brand" aria-label="eSync home">
+            <img src="eSynxd.logo.png" class="brand-mark" alt=""
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="brand-mark-fallback" style="display:none;">eS</span>
+            <span class="brand-name">eSync</span>
+        </a>
+
+        <nav class="dash-nav">
+            <button class="dash-nav-item active" data-tab="home"><i class="fa-solid fa-house"></i> Home</button>
+            <button class="dash-nav-item" data-tab="calendar"><i class="fa-solid fa-calendar-days"></i> Calendar</button>
+            <button class="dash-nav-item" data-tab="badge"><i class="fa-solid fa-bus"></i> Bus badge</button>
+            <button class="dash-nav-item" data-tab="messages"><i class="fa-solid fa-message"></i> Messages</button>
+            <button class="dash-nav-item" data-tab="profile"><i class="fa-solid fa-user"></i> Profile</button>
+        </nav>
+
+        <div class="dash-sidebar-foot">
+            <div class="user-chip" id="sidebarUserChip">
+                <span id="sidebarAvatarSlot"><span class="avatar">?</span></span>
+                <span id="sidebarName">Loading…</span>
+            </div>
+            <button class="btn btn-ghost btn-block" id="logoutBtn">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
+            </button>
+        </div>
+    </aside>
+
+    <button class="dash-menu-toggle" id="dashMenuToggle" aria-label="Toggle menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <main class="dash-main">
+
+        <header class="dash-header">
+            <h1 id="dashTitle">Home</h1>
+            <span class="role-pill" id="rolePill">—</span>
+        </header>
+
+        <!-- HOME -->
+        <section class="tab-panel active" id="panel-home">
+            <div class="stat-grid" id="homeStats"></div>
+            <div class="home-columns">
+                <div class="panel-card">
+                    <h3><i class="fa-solid fa-calendar-day"></i> Today &amp; upcoming</h3>
+                    <div id="homeUpcoming" class="upcoming-list"><p class="muted-note">Loading…</p></div>
+                </div>
+                <div class="panel-card">
+                    <h3><i class="fa-solid fa-inbox"></i> Recent messages</h3>
+                    <div id="homeMessages" class="upcoming-list"><p class="muted-note">Loading…</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CALENDAR -->
+        <section class="tab-panel" id="panel-calendar">
+            <div class="calendar-toolbar">
+                <div class="cal-nav">
+                    <button class="btn btn-ghost btn-icon" id="calPrev" aria-label="Previous month"><i class="fa-solid fa-chevron-left"></i></button>
+                    <h2 id="calMonthLabel">Month</h2>
+                    <button class="btn btn-ghost btn-icon" id="calNext" aria-label="Next month"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <button class="btn btn-primary" id="calAddBtn" data-role="teacher" style="display:none;">
+                    <i class="fa-solid fa-plus"></i> New
+                </button>
+            </div>
+            <div class="cal-legend">
+                <span><i class="dot homework"></i> Homework</span>
+                <span><i class="dot exam"></i> Exam</span>
+                <span><i class="dot event"></i> Event</span>
+                <span><i class="dot announcement"></i> Announcement</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </section>
+
+        <!-- BUS BADGE -->
+        <section class="tab-panel" id="panel-badge">
+            <div id="badgeContent"></div>
+        </section>
+
+        <!-- MESSAGES -->
+        <section class="tab-panel" id="panel-messages">
+            <div class="messages-shell">
+                <div class="messages-list-col">
+                    <button class="btn btn-primary btn-block" id="newMessageBtn">
+                        <i class="fa-solid fa-pen"></i> New message
+                    </button>
+                    <div id="messagesList" class="messages-list"></div>
+                </div>
+                <div class="messages-thread-col" id="messagesThread">
+                    <p class="muted-note">Select a message to read it.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section class="tab-panel" id="panel-profile">
+            <div class="panel-card profile-card">
+                <h3><i class="fa-solid fa-id-badge"></i> Your profile</h3>
+                <div class="avatar-preview-row">
+                    <span id="avatarPreview"></span>
+                    <div class="field" style="flex:1;margin-bottom:0;">
+                        <label for="profPicture">Profile picture URL</label>
+                        <div class="input-wrap"><i class="fa-solid fa-image"></i><input id="profPicture" type="text" placeholder="https://…"></div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="profName">Display name</label>
+                    <div class="input-wrap"><i class="fa-solid fa-signature"></i><input id="profName" type="text"></div>
+                </div>
+                <div class="profile-readonly" id="profileReadonly"></div>
+                <div class="form-msg success" id="profMsg"><i class="fa-solid fa-circle-check"></i><span id="profMsgText"></span></div>
+                <button class="btn btn-primary" id="profSaveBtn"><i class="fa-solid fa-floppy-disk"></i> Save changes</button>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- Day zoom modal (calendar) -->
+<div class="modal-overlay" id="dayModal">
+    <div class="modal-panel">
+        <div class="modal-head">
+            <h3 id="dayModalTitle">Day</h3>
+            <button class="modal-close" id="dayModalClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="dayModalBody"></div>
+        <div class="modal-body" id="dayModalForm" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- Confirm modal (bus badge grant/revoke) -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-panel modal-panel-sm">
+        <div class="modal-head">
+            <h3 id="confirmTitle">Confirm</h3>
+            <button class="modal-close" id="confirmClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="confirmBody"></div>
+    </div>
+</div>
+
+<!-- New message modal -->
+<div class="modal-overlay" id="messageModal">
+    <div class="modal-panel">
+        <div class="modal-head">
+            <h3>New message</h3>
+            <button class="modal-close" id="messageModalClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="messageModalBody"></div>
+    </div>
+</div>
+
+<!-- Supabase JS client - MUST be loaded before auth.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/badges.js"></script>
+<script src="js/messages.js"></script>
+<script src="js/profile.js"></script>
+</body>
+</html>
