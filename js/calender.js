@@ -1,205 +1,119 @@
-/* ============================================================
-   calendar.js — month calendar with a day "zoom in" panel
-   showing homework, exams, events, and announcements.
-============================================================ */
+/* calendar.js — excursions/events */
 
-let calState = { year: null, month: null, events: [], profile: null };
+let calState = { profile: null, excursions: [] };
 
-function initCalendar(profile) {
+async function initCalendar(profile) {
     calState.profile = profile;
-    const now = new Date();
-    calState.year = now.getFullYear();
-    calState.month = now.getMonth();
+    document.getElementById("calAddBtn").addEventListener("click", openExcursionForm);
+    await loadExcursions();
+}
 
-    document.getElementById("calPrev").addEventListener("click", () => shiftMonth(-1));
-    document.getElementById("calNext").addEventListener("click", () => shiftMonth(1));
+async function loadExcursions() {
+    const { data } = await supabaseClient.from("excursions").select("*").order("event_date");
+    calState.excursions = data || [];
+    renderExcursions();
+}
 
-    if (profile.viewRole === "teacher") {
-        document.getElementById("calAddBtn").addEventListener("click", () => openEventForm(todayISO()));
+function renderExcursions() {
+    const list = document.getElementById("excursionsList");
+    if (!list) return;
+    
+    if (calState.excursions.length === 0) {
+        list.innerHTML = `<p class="muted-note">No excursions scheduled</p>`;
+        return;
     }
 
-    loadMonth();
+    list.innerHTML = calState.excursions.map((e) => {
+        const timeStr = e.start_time && e.end_time 
+            ? `${e.start_time} - ${e.end_time}`
+            : e.start_time 
+            ? `From ${e.start_time}`
+            : "All day";
+        
+        return `
+            <div class="excursion-card">
+                <div class="excursion-head">
+                    <h4>${e.event_name}</h4>
+                    <span class="excursion-date">${formatDate(e.event_date)}</span>
+                </div>
+                <p class="excursion-time"><i class="fa-solid fa-clock"></i> ${timeStr}</p>
+                ${e.details ? `<p class="excursion-details">${e.details}</p>` : ""}
+                ${calState.profile.viewRole === "teacher" ? `
+                    <button class="btn btn-ghost btn-sm" onclick="deleteExcursion('${e.id}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                ` : ""}
+            </div>`;
+    }).join("");
 }
 
-function shiftMonth(delta) {
-    calState.month += delta;
-    if (calState.month < 0) { calState.month = 11; calState.year--; }
-    if (calState.month > 11) { calState.month = 0; calState.year++; }
-    loadMonth();
-}
-
-function todayISO() {
-    return new Date().toISOString().slice(0, 10);
-}
-
-async function loadMonth() {
-    const { year, month } = calState;
-    const first = new Date(year, month, 1).toISOString().slice(0, 10);
-    const last = new Date(year, month + 1, 0).toISOString().slice(0, 10);
-
-    const { data, error } = await supabaseClient
-        .from("calendar_events")
-        .select("*")
-        .gte("event_date", first)
-        .lte("event_date", last)
-        .order("event_date", { ascending: true });
-
-    calState.events = error ? [] : data;
-    renderCalendarGrid();
-}
-
-function renderCalendarGrid() {
-    const { year, month, events } = calState;
-    const grid = document.getElementById("calendarGrid");
-    const label = document.getElementById("calMonthLabel");
-    label.textContent = new Date(year, month, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const todayStr = todayISO();
-
-    const eventsByDay = {};
-    events.forEach((e) => {
-        (eventsByDay[e.event_date] = eventsByDay[e.event_date] || []).push(e);
-    });
-
-    let html = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-        .map((d) => `<div class="cal-weekday">${d}</div>`).join("");
-
-    for (let i = 0; i < firstDay; i++) html += `<div class="cal-cell empty"></div>`;
-
-    for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-        const dayEvents = eventsByDay[dateStr] || [];
-        const isToday = dateStr === todayStr;
-        html += `
-            <button class="cal-cell${isToday ? " today" : ""}" data-date="${dateStr}">
-                <span class="cal-daynum">${d}</span>
-                <span class="cal-dots">${dayEvents.slice(0, 4).map((e) => `<span class="dot ${e.event_type}"></span>`).join("")}</span>
-            </button>`;
-    }
-
-    grid.innerHTML = html;
-    grid.querySelectorAll(".cal-cell:not(.empty)").forEach((cell) => {
-        cell.addEventListener("click", () => openDayModal(cell.dataset.date));
-    });
-}
-
-function openDayModal(dateStr) {
-    const dayEvents = calState.events.filter((e) => e.event_date === dateStr);
-    const title = document.getElementById("dayModalTitle");
-    const body = document.getElementById("dayModalBody");
-    const formWrap = document.getElementById("dayModalForm");
-
-    body.style.display = "block";
-    formWrap.style.display = "none";
-    formWrap.innerHTML = "";
-
-    title.textContent = new Date(dateStr + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
-
-    body.innerHTML = dayEvents.length
-        ? dayEvents.map((e) => `
-            <div class="day-event">
-                <span class="type-badge ${e.event_type}">${capitalize(e.event_type)}</span>
-                <h4>${e.title}</h4>
-                ${e.subject ? `<p class="upcoming-meta">${e.subject}</p>` : ""}
-                <p>${e.description || ""}</p>
-            </div>`).join("")
-        : `<p class="muted-note">Nothing scheduled for this day.</p>`;
-
-    if (calState.profile.viewRole === "teacher") {
-        body.innerHTML += `
-            <button class="btn btn-ghost btn-block" id="dayAddBtn" style="margin-top:14px;">
-                <i class="fa-solid fa-plus"></i> Add something for this day
-            </button>`;
-    }
-
-    openModal("dayModal");
-
-    if (calState.profile.viewRole === "teacher") {
-        document.getElementById("dayAddBtn").addEventListener("click", () => openEventForm(dateStr));
-    }
-}
-
-function openEventForm(dateStr) {
-    const body = document.getElementById("dayModalBody");
-    const formWrap = document.getElementById("dayModalForm");
-    const title = document.getElementById("dayModalTitle");
-
-    title.textContent = "Add to calendar";
-    body.style.display = "none";
-    formWrap.style.display = "block";
-
-    formWrap.innerHTML = `
+function openExcursionForm() {
+    const body = document.getElementById("excursionModalBody");
+    body.innerHTML = `
         <div class="field">
-            <label>Title</label>
-            <div class="input-wrap"><i class="fa-solid fa-heading"></i><input id="evTitle" type="text" placeholder="e.g. Chapter 4 worksheet"></div>
-        </div>
-        <div class="field">
-            <label>Type</label>
-            <select id="evType" class="select-input">
-                <option value="homework">Homework</option>
-                <option value="exam">Exam</option>
-                <option value="event">Event</option>
-                <option value="announcement">Announcement</option>
-            </select>
+            <label>Event name</label>
+            <div class="input-wrap"><i class="fa-solid fa-heading"></i><input id="excTitle" type="text" placeholder="e.g. Year 10 trip to museum"></div>
         </div>
         <div class="field">
             <label>Date</label>
-            <div class="input-wrap"><i class="fa-solid fa-calendar"></i><input id="evDate" type="date" value="${dateStr}"></div>
+            <div class="input-wrap"><i class="fa-solid fa-calendar"></i><input id="excDate" type="date"></div>
         </div>
         <div class="field">
-            <label>Subject (optional)</label>
-            <div class="input-wrap"><i class="fa-solid fa-book"></i><input id="evSubject" type="text" placeholder="e.g. Mathematics"></div>
+            <label>Start time (optional)</label>
+            <div class="input-wrap"><i class="fa-solid fa-clock"></i><input id="excStartTime" type="time"></div>
         </div>
         <div class="field">
-            <label>Class (optional — leave blank to show everyone)</label>
-            <div class="input-wrap"><i class="fa-solid fa-users"></i><input id="evClass" type="text" placeholder="e.g. Year 10B"></div>
+            <label>End time (optional)</label>
+            <div class="input-wrap"><i class="fa-solid fa-clock"></i><input id="excEndTime" type="time"></div>
         </div>
         <div class="field">
-            <label>Description</label>
-            <textarea id="evDescription" rows="3" placeholder="Details students and parents should see"></textarea>
+            <label>Details (optional)</label>
+            <textarea id="excDetails" rows="3" placeholder="Meeting point, what to bring, etc."></textarea>
         </div>
-        <div class="form-msg error" id="evMsg"><i class="fa-solid fa-circle-exclamation"></i><span id="evMsgText"></span></div>
-        <button class="btn btn-primary btn-block" id="evSaveBtn"><i class="fa-solid fa-check"></i> Post to calendar</button>
+        <div class="form-msg error" id="excMsg"><i class="fa-solid fa-circle-exclamation"></i><span id="excMsgText"></span></div>
+        <button class="btn btn-primary btn-block" id="excSaveBtn"><i class="fa-solid fa-check"></i> Add excursion</button>
     `;
-
-    document.getElementById("evSaveBtn").addEventListener("click", saveNewEvent);
+    openModal("excursionModal");
+    document.getElementById("excSaveBtn").addEventListener("click", saveExcursion);
 }
 
-async function saveNewEvent() {
-    const title = document.getElementById("evTitle").value.trim();
-    const type = document.getElementById("evType").value;
-    const date = document.getElementById("evDate").value;
-    const subject = document.getElementById("evSubject").value.trim();
-    const classGroup = document.getElementById("evClass").value.trim();
-    const description = document.getElementById("evDescription").value.trim();
-    const msg = document.getElementById("evMsg");
-    const msgText = document.getElementById("evMsgText");
+async function saveExcursion() {
+    const title = document.getElementById("excTitle").value.trim();
+    const date = document.getElementById("excDate").value;
+    const startTime = document.getElementById("excStartTime").value;
+    const endTime = document.getElementById("excEndTime").value;
+    const details = document.getElementById("excDetails").value.trim();
+    const msg = document.getElementById("excMsg");
 
     if (!title || !date) {
-        msgText.textContent = "Add at least a title and date.";
+        document.getElementById("excMsgText").textContent = "Event name and date required";
         msg.classList.add("show");
         return;
     }
 
-    const { error } = await supabaseClient.from("calendar_events").insert({
-        title,
-        event_type: type,
+    const { error } = await supabaseClient.from("excursions").insert({
+        event_name: title,
         event_date: date,
-        subject: subject || null,
-        class_group: classGroup || null,
-        description,
+        start_time: startTime || null,
+        end_time: endTime || null,
+        details: details || null,
         created_by: calState.profile.id
     });
 
     if (error) {
-        msgText.textContent = error.message;
+        document.getElementById("excMsgText").textContent = error.message;
         msg.classList.add("show");
         return;
     }
 
-    closeModal("dayModal");
-    await loadMonth();
-    await renderHomeOverview(calState.profile);
+    closeModal("excursionModal");
+    await loadExcursions();
+}
+
+async function deleteExcursion(id) {
+    if (!confirm("Delete this excursion?")) return;
+    await supabaseClient.from("excursions").delete().eq("id", id);
+    await loadExcursions();
+}
+
+function editExcursion(id) {
+    // TODO: implement edit form
 }

@@ -1,15 +1,11 @@
-/* ============================================================
-   messages.js — direct messaging for parent/teacher/student
-   communication. Teachers can message any parent or student;
-   parents and students can message any teacher.
-============================================================ */
+/* messages.js — teacher-initiated messaging */
 
-let msgState = { profile: null, all: [], people: {} };
+let msgState = { profile: null, messages: [], people: {} };
 
 async function initMessages(profile) {
     msgState.profile = profile;
-    await loadMessages();
     document.getElementById("newMessageBtn").addEventListener("click", openNewMessageModal);
+    await loadMessages();
 }
 
 async function loadMessages() {
@@ -19,9 +15,9 @@ async function loadMessages() {
         .or(`sender_id.eq.${msgState.profile.id},recipient_id.eq.${msgState.profile.id}`)
         .order("created_at", { ascending: false });
 
-    msgState.all = data || [];
+    msgState.messages = data || [];
 
-    const ids = [...new Set(msgState.all.flatMap((m) => [m.sender_id, m.recipient_id]))];
+    const ids = [...new Set(msgState.messages.flatMap((m) => [m.sender_id, m.recipient_id]))];
     if (ids.length) {
         const { data: people } = await supabaseClient.from("profiles").select("id, full_name, profile_picture, role").in("id", ids);
         (people || []).forEach((p) => { msgState.people[p.id] = p; });
@@ -37,16 +33,16 @@ function otherParty(m) {
 
 function renderMessageList() {
     const list = document.getElementById("messagesList");
-    if (!msgState.all.length) {
-        list.innerHTML = `<p class="muted-note" style="padding:16px;">No messages yet.</p>`;
+    if (!msgState.messages.length) {
+        list.innerHTML = `<p class="muted-note" style="padding:16px;">No messages</p>`;
         return;
     }
 
-    list.innerHTML = msgState.all.map((m) => {
+    list.innerHTML = msgState.messages.map((m) => {
         const person = otherParty(m);
         const unread = !m.is_read && m.recipient_id === msgState.profile.id;
         return `
-            <button class="message-row${unread ? " unread" : ""}" data-id="${m.id}">
+            <button class="message-row${unread ? " unread" : ""}" onclick="openThread('${m.id}')">
                 ${avatarHtml(person)}
                 <div class="message-row-body">
                     <p class="upcoming-title">${person.full_name}</p>
@@ -54,14 +50,10 @@ function renderMessageList() {
                 </div>
             </button>`;
     }).join("");
-
-    list.querySelectorAll(".message-row").forEach((row) => {
-        row.addEventListener("click", () => openThread(row.dataset.id));
-    });
 }
 
 async function openThread(messageId) {
-    const m = msgState.all.find((x) => x.id === messageId);
+    const m = msgState.messages.find((x) => x.id === messageId);
     if (!m) return;
 
     if (!m.is_read && m.recipient_id === msgState.profile.id) {
@@ -75,38 +67,64 @@ async function openThread(messageId) {
     thread.innerHTML = `
         <div class="thread-head">
             ${avatarHtml(person)}
-            <div>
-                <p class="upcoming-title">${person.full_name}</p>
-                <p class="upcoming-meta">${capitalize(person.role || "")}</p>
-            </div>
+            <div><p class="upcoming-title">${person.full_name}</p><p class="upcoming-meta">${person.role || ""}</p></div>
         </div>
         <div class="thread-msg">
-            <p class="upcoming-title">${m.subject || "(no subject)"}</p>
-            <p class="upcoming-meta">${new Date(m.created_at).toLocaleString()}</p>
-            <p style="margin-top:10px;">${m.body}</p>
+            <p style="font-weight:600;">${m.subject || "(no subject)"}</p>
+            <p class="upcoming-meta">${formatDateTime(m.created_at)}</p>
+            <p style="margin-top:12px;line-height:1.6;">${m.body}</p>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="openReplyForm('${m.id}')"><i class="fa-solid fa-reply"></i> Reply</button>`;
+}
+
+function openReplyForm(messageId) {
+    const m = msgState.messages.find((x) => x.id === messageId);
+    const person = otherParty(m);
+    const thread = document.getElementById("messagesThread");
+
+    thread.innerHTML += `
+        <div class="reply-form" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+            <textarea id="replyBody" rows="3" placeholder="Your reply…"></textarea>
+            <button class="btn btn-primary" style="margin-top:10px;" onclick="sendReply('${messageId}')"><i class="fa-solid fa-send"></i> Send reply</button>
         </div>`;
+
+    document.getElementById("replyBody").focus();
+}
+
+async function sendReply(messageId) {
+    const m = msgState.messages.find((x) => x.id === messageId);
+    const body = document.getElementById("replyBody").value.trim();
+
+    if (!body) return;
+
+    // Send as a new message, reversing sender/recipient
+    await supabaseClient.from("messages").insert({
+        sender_id: msgState.profile.id,
+        recipient_id: otherParty(m).id,
+        subject: `Re: ${m.subject}`,
+        body
+    });
+
+    await loadMessages();
+    const firstMsg = msgState.messages[0];
+    await openThread(firstMsg.id);
 }
 
 async function openNewMessageModal() {
-    const { data: allProfiles } = await supabaseClient.from("profiles").select("*").order("full_name");
-    const others = (allProfiles || []).filter((p) => p.id !== msgState.profile.id);
-    const recipients = msgState.profile.viewRole === "teacher"
-        ? others.filter((p) => deriveViewRole(p.role) !== "teacher")
-        : others.filter((p) => deriveViewRole(p.role) === "teacher");
-
-    const body = document.getElementById("messageModalBody");
-
-    if (!recipients.length) {
-        body.innerHTML = `<p class="muted-note">No one to message yet.</p>`;
-        openModal("messageModal");
+    if (msgState.profile.viewRole !== "teacher") {
+        alert("Only teachers can start new messages");
         return;
     }
 
+    const { data: recipients } = await supabaseClient.from("profiles").select("*").neq("id", msgState.profile.id).order("full_name");
+
+    const body = document.getElementById("messageModalBody");
     body.innerHTML = `
         <div class="field">
             <label>To</label>
             <select id="msgRecipient" class="select-input">
-                ${recipients.map((r) => `<option value="${r.id}">${r.full_name} (${capitalize(r.role)})</option>`).join("")}
+                <option value="">Select recipient…</option>
+                ${(recipients || []).map((r) => `<option value="${r.id}">${r.full_name} (${r.role})</option>`).join("")}
             </select>
         </div>
         <div class="field">
@@ -130,10 +148,9 @@ async function sendNewMessage() {
     const subject = document.getElementById("msgSubject").value.trim();
     const body = document.getElementById("msgBody").value.trim();
     const msg = document.getElementById("msgFormMsg");
-    const msgText = document.getElementById("msgFormMsgText");
 
-    if (!body) {
-        msgText.textContent = "Write a message before sending.";
+    if (!recipient || !body) {
+        document.getElementById("msgFormMsgText").textContent = "Select recipient and write a message";
         msg.classList.add("show");
         return;
     }
@@ -146,7 +163,7 @@ async function sendNewMessage() {
     });
 
     if (error) {
-        msgText.textContent = error.message;
+        document.getElementById("msgFormMsgText").textContent = error.message;
         msg.classList.add("show");
         return;
     }

@@ -1,9 +1,6 @@
-/* ============================================================
-   badges.js — bus badge tab. Only a teacher can grant or
-   revoke a badge; students and parents get a read-only view.
-============================================================ */
+/* badges.js — bus badge system */
 
-let badgeState = { profile: null, students: [], badges: {} };
+let badgeState = { profile: null, badges: {}, students: [] };
 
 async function initBadges(profile) {
     badgeState.profile = profile;
@@ -15,17 +12,11 @@ async function initBadges(profile) {
     } else if (profile.viewRole === "teacher") {
         container.innerHTML = `
             <div class="panel-card">
-                <div class="input-wrap" style="max-width:320px;margin-bottom:18px;">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input id="badgeSearch" type="text" placeholder="Search students…">
-                </div>
+                <input id="badgeSearch" type="text" placeholder="Search students…" class="search-input">
                 <div id="badgeStudentList" class="badge-list"></div>
             </div>`;
         await loadTeacherBadgeList();
         document.getElementById("badgeSearch").addEventListener("input", (e) => renderTeacherBadgeList(e.target.value));
-    } else if (profile.viewRole === "parent") {
-        container.innerHTML = `<div id="parentBadgeList" class="badge-list"></div>`;
-        await renderParentBadges(profile.id);
     }
 }
 
@@ -33,22 +24,33 @@ async function renderStudentBadge(studentId, targetId) {
     const { data: badge } = await supabaseClient.from("bus_badges").select("*").eq("student_id", studentId).maybeSingle();
     const active = badge && badge.status === "active";
     const el = document.getElementById(targetId);
+
     el.innerHTML = `
         <div class="panel-card badge-status-card">
-            <i class="fa-solid fa-bus badge-icon ${active ? "active" : ""}"></i>
-            <h3>${active ? "Bus badge active" : "No bus badge issued"}</h3>
+            <div class="badge-icon-large ${active ? "active" : ""}">
+                <i class="fa-solid fa-bus"></i>
+            </div>
+            <h3>${active ? "✓ Bus badge active" : "No bus badge"}</h3>
             <p class="muted-note">${active
-                ? `Granted by a teacher on ${new Date(badge.granted_at).toLocaleDateString()}. Clear to leave early for the bus.`
-                : "No permission to leave early for the bus yet. Only a teacher can grant this."}</p>
-            ${badge && badge.note ? `<p class="muted-note" style="margin-top:8px;">Note: ${badge.note}</p>` : ""}
+                ? `Granted by a teacher on ${new Date(badge.granted_at).toLocaleDateString()}`
+                : "Not yet granted. Only a teacher can issue this."}</p>
+            ${badge && badge.note ? `<p class="muted-note" style="margin-top:8px;font-style:italic;">"${badge.note}"</p>` : ""}
         </div>`;
 }
 
 async function loadTeacherBadgeList() {
-    const { data: allProfiles } = await supabaseClient.from("profiles").select("*").order("full_name");
-    const { data: badges } = await supabaseClient.from("bus_badges").select("*");
+    const { data: students } = await supabaseClient.from("class_roster").select("student_id").eq("teacher_id", badgeState.profile.id);
+    const studentIds = (students || []).map((s) => s.student_id);
 
-    badgeState.students = (allProfiles || []).filter((p) => deriveViewRole(p.role) === "student");
+    if (!studentIds.length) {
+        document.getElementById("badgeStudentList").innerHTML = `<p class="muted-note">No students in your class</p>`;
+        return;
+    }
+
+    const { data: profiles } = await supabaseClient.from("profiles").select("*").in("id", studentIds).order("full_name");
+    const { data: badges } = await supabaseClient.from("bus_badges").select("*").in("student_id", studentIds);
+
+    badgeState.students = profiles || [];
     badgeState.badges = {};
     (badges || []).forEach((b) => { badgeState.badges[b.student_id] = b; });
 
@@ -69,72 +71,58 @@ function renderTeacherBadgeList(filter) {
                     ${avatarHtml(s)}
                     <div>
                         <p class="upcoming-title">${s.full_name}</p>
-                        <p class="upcoming-meta">${s.role || ""}</p>
                     </div>
                 </div>
-                <span class="status-pill ${active ? "active" : "inactive"}">${active ? "Active" : "None"}</span>
-                <button class="btn ${active ? "btn-ghost" : "btn-primary"} btn-sm" data-student="${s.id}" data-action="${active ? "revoke" : "grant"}">
+                <div class="badge-status ${active ? "active" : ""}">
+                    <i class="fa-solid fa-bus"></i> ${active ? "Active" : "None"}
+                </div>
+                <button class="btn ${active ? "btn-ghost" : "btn-primary"} btn-sm" onclick="openBadgeModal('${s.id}', ${active})">
                     ${active ? "Revoke" : "Grant"}
                 </button>
             </div>`;
-    }).join("") : `<p class="muted-note">No students found.</p>`;
-
-    list.querySelectorAll("button[data-action]").forEach((btn) => {
-        btn.addEventListener("click", () => confirmBadgeAction(btn.dataset.student, btn.dataset.action));
-    });
+    }).join("") : `<p class="muted-note">No matches</p>`;
 }
 
-function confirmBadgeAction(studentId, action) {
+function openBadgeModal(studentId, isActive) {
     const student = badgeState.students.find((s) => s.id === studentId);
-    document.getElementById("confirmTitle").textContent = action === "grant" ? "Grant bus badge" : "Revoke bus badge";
-    document.getElementById("confirmBody").innerHTML = `
-        <p class="muted-note" style="margin-bottom:16px;">
-            ${action === "grant"
-                ? `Give ${student.full_name} permission to leave early for the bus.`
-                : `Remove ${student.full_name}'s permission to leave early.`}
-        </p>
-        <div class="field"><label>Note (optional)</label><textarea id="badgeNote" rows="2" placeholder="e.g. Approved by front office"></textarea></div>
-        <button class="btn ${action === "grant" ? "btn-primary" : "btn-ghost"} btn-block" id="badgeConfirmBtn">
-            ${action === "grant" ? "Confirm grant" : "Confirm revoke"}
-        </button>`;
-    openModal("confirmModal");
+    const body = document.getElementById("badgeModalBody");
 
-    document.getElementById("badgeConfirmBtn").addEventListener("click", async () => {
-        const note = document.getElementById("badgeNote").value.trim();
-        await supabaseClient.from("bus_badges").upsert({
-            student_id: studentId,
-            status: action === "grant" ? "active" : "revoked",
-            granted_by: badgeState.profile.id,
-            granted_at: new Date().toISOString(),
-            note,
-            updated_at: new Date().toISOString()
-        });
-        closeModal("confirmModal");
-        await loadTeacherBadgeList();
-    });
+    body.innerHTML = `
+        <p style="margin-bottom:16px;"><strong>${student.full_name}</strong></p>
+        <p class="muted-note" style="margin-bottom:16px;">
+            ${isActive
+                ? "Remove this student's permission to leave early for the bus?"
+                : "Grant this student permission to leave early for the bus?"}
+        </p>
+        <div class="field">
+            <label>Note (optional)</label>
+            <textarea id="badgeNote" rows="2" placeholder="e.g. Approved by office"></textarea>
+        </div>
+        <button class="btn ${isActive ? "btn-ghost" : "btn-primary"} btn-block" id="badgeConfirmBtn">
+            ${isActive ? "Revoke badge" : "Grant badge"}
+        </button>`;
+
+    openModal("badgeModal");
+    document.getElementById("badgeConfirmBtn").addEventListener("click", () => confirmBadge(studentId, !isActive));
 }
 
-async function renderParentBadges(parentId) {
-    const { data: links } = await supabaseClient.from("parent_links").select("student_id").eq("parent_id", parentId);
-    const list = document.getElementById("parentBadgeList");
+async function confirmBadge(studentId, grant) {
+    const note = document.getElementById("badgeNote").value.trim();
 
-    if (!links || links.length === 0) {
-        list.innerHTML = `<p class="muted-note">No children linked to your account yet.</p>`;
+    const { error } = await supabaseClient.from("bus_badges").upsert({
+        student_id: studentId,
+        status: grant ? "active" : "revoked",
+        granted_by: badgeState.profile.id,
+        granted_at: new Date().toISOString(),
+        note,
+        updated_at: new Date().toISOString()
+    });
+
+    if (error) {
+        alert("Error: " + error.message);
         return;
     }
 
-    const studentIds = links.map((l) => l.student_id);
-    const { data: students } = await supabaseClient.from("profiles").select("*").in("id", studentIds);
-
-    list.innerHTML = (students || []).map((s) => `
-        <div class="panel-card">
-            <p class="upcoming-title" style="margin-bottom:10px;">
-                <i class="fa-solid fa-child-reaching"></i> ${s.full_name}
-            </p>
-            <div id="parentBadge-${s.id}"></div>
-        </div>`).join("");
-
-    for (const s of (students || [])) {
-        await renderStudentBadge(s.id, `parentBadge-${s.id}`);
-    }
+    closeModal("badgeModal");
+    await loadTeacherBadgeList();
 }
