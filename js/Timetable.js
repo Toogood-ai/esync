@@ -60,7 +60,7 @@ function renderTimetable() {
             // Non-editable breaks: TG, A, B, L
             if (["TG", "A", "B", "L"].includes(period.num)) {
                 html += `<div class="tt-cell tt-break">${subject}</div>`;
-            } else if (ttState.isEditing && ttState.profile.viewRole === "teacher") {
+            } else if (ttState.isEditing && (ttState.profile.viewRole === "teacher" || ttState.profile.viewRole === "principal")) {
                 html += `<button class="tt-cell tt-editable" onclick="openTimetableEdit(${weekday}, '${period.num}')" title="Click to edit">
                     <div class="tt-subject">${subject}</div>
                     ${classroom ? `<div class="tt-classroom">${classroom}</div>` : ""}
@@ -117,21 +117,33 @@ async function saveTimetableEntry(weekday, period, key) {
     const subject = document.getElementById("ttSubject").value.trim();
     const classroom = document.getElementById("ttClassroom").value.trim();
     const msg = document.getElementById("ttMsg");
+    const msgText = document.getElementById("ttMsgText");
 
     if (!subject) {
-        document.getElementById("ttMsgText").textContent = "Subject required";
+        msgText.textContent = "Subject is required.";
         msg.classList.add("show");
         return;
     }
 
     const row = ttState.timetable[key];
+    const periodNum = Number(period);
+    let error;
 
     if (row) {
-        // Update
-        await supabaseClient.from("timetable").update({ subject, classroom, updated_at: new Date().toISOString() }).eq("id", row.id);
+        ({ error } = await supabaseClient
+            .from("timetable")
+            .update({ subject, classroom, updated_at: new Date().toISOString() })
+            .eq("id", row.id));
     } else {
-        // Insert
-        await supabaseClient.from("timetable").insert({ weekday, period, subject, classroom, teacher_id: ttState.profile.id });
+        ({ error } = await supabaseClient
+            .from("timetable")
+            .insert({ weekday, period: periodNum, subject, classroom, teacher_id: ttState.profile.id }));
+    }
+
+    if (error) {
+        msgText.textContent = error.message;
+        msg.classList.add("show");
+        return;
     }
 
     closeModal("timetableModal");
@@ -141,7 +153,8 @@ async function saveTimetableEntry(weekday, period, key) {
 async function deleteTimetableEntry(key) {
     if (!confirm("Delete this period?")) return;
     const row = ttState.timetable[key];
-    await supabaseClient.from("timetable").delete().eq("id", row.id);
+    const { error } = await supabaseClient.from("timetable").delete().eq("id", row.id);
+    if (error) { alert(error.message); return; }
     closeModal("timetableModal");
     await loadTimetable();
 }
