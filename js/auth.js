@@ -7,10 +7,9 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ---------------------------------------------------------
-   Login only - no signup flow. Demo users are created
-   directly in the Supabase dashboard (Authentication > Users
-   > Add user), then given a matching row in the `profiles`
-   table (see sql/schema.sql for the setup guide).
+   Login only - no signup flow. Demo users are created directly
+   in the Supabase dashboard (Authentication > Users > Add user),
+   then given a matching row in the `profiles` table.
 --------------------------------------------------------- */
 
 async function loginUser({ email, password }) {
@@ -33,9 +32,7 @@ async function getSession() {
 }
 
 /* Fetches the current user's row from `profiles`. Returns null if the
-   user is logged in but no profile has been set up for them yet (this
-   happens if you created the auth user but haven't added their profile
-   row - see sql/schema.sql). */
+   user is logged in but no profile row exists for them yet. */
 async function getProfile() {
     const session = await getSession();
     if (!session) return null;
