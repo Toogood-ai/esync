@@ -105,6 +105,7 @@
 }
 
 .role-pill.role-teacher { color: var(--accent); }
+.role-pill.role-principal { color: var(--danger); }
 .role-pill.role-student { color: var(--primary); }
 .role-pill.role-parent { color: var(--success); }
 
@@ -202,12 +203,13 @@
 }
 
 .home-item {
-    padding: 8px 0;
+    padding: 9px 0;
     border-bottom: 1px solid var(--border);
-    font-size: .9rem;
+    font-size: .88rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 .home-item:last-child { border-bottom: none; }
@@ -220,49 +222,347 @@
     margin-top: 2px;
 }
 
-/* ---- Excursions ---- */
-.excursions-list {
-    display: grid;
-    gap: 16px;
+/* ---- Today hero (centerpiece of Home) ---- */
+.today-hero {
+    margin-bottom: 20px;
 }
 
-.excursion-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 20px;
-}
-
-.excursion-head {
+.hero-card {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: start;
+    gap: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 20px 50px var(--primary-glow);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 85% 15%, rgba(255,255,255,.14), transparent 55%);
+    pointer-events: none;
+}
+
+.hero-eyebrow {
+    color: rgba(255,255,255,.75);
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-bottom: 6px;
+}
+
+.hero-left h2 {
+    font-family: var(--font-display);
+    color: #fff;
+    font-size: 1.7rem;
     margin-bottom: 10px;
 }
 
-.excursion-head h4 { font-size: 1rem; margin: 0; }
+.hero-period {
+    color: rgba(255,255,255,.92);
+    font-size: .92rem;
+}
 
-.excursion-date {
-    background: var(--primary-glow);
-    color: var(--primary);
-    padding: 4px 10px;
-    border-radius: 999px;
+.hero-period-muted {
+    color: rgba(255,255,255,.65);
+}
+
+.hero-btn {
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.35);
+    color: #fff;
+    box-shadow: none;
+    backdrop-filter: blur(6px);
+}
+
+.hero-btn:hover {
+    background: rgba(255,255,255,.26);
+    box-shadow: none;
+}
+
+/* ---- Week strip ---- */
+.week-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.week-day {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: transform .18s, border-color .18s, background .18s;
+}
+
+.week-day:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+}
+
+.week-day.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: transparent;
+    box-shadow: 0 8px 20px var(--primary-glow);
+}
+
+.week-day-name {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.week-day.active .week-day-name { color: rgba(255,255,255,.85); }
+
+.week-day-num {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.week-day.active .week-day-num { color: #fff; }
+
+/* ---- Calendar grid ---- */
+.calendar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.cal-nav h2 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    min-width: 160px;
+    text-align: center;
+}
+
+.cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+    font-size: .78rem;
+    color: var(--muted);
+}
+
+.cal-legend span { display: flex; align-items: center; gap: 6px; }
+
+.dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.dot.excursion { background: var(--accent); }
+.dot.homework { background: var(--primary); }
+.dot.assessment { background: var(--danger); }
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+.cal-weekday {
+    text-align: center;
     font-size: .75rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--muted);
+    padding-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
 }
 
-.excursion-time {
-    color: var(--muted);
-    font-size: .85rem;
-    margin: 8px 0;
+.cal-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-height: 74px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    color: var(--text);
+    transition: border-color .2s, transform .2s;
+    cursor: pointer;
 }
 
-.excursion-details {
+.cal-cell:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.cal-cell:active {
+    transform: scale(.96);
+}
+
+.cal-cell.empty {
+    background: transparent;
+    border-color: transparent;
+    pointer-events: none;
+}
+
+.cal-cell.this-week {
+    background: rgba(59,111,237,.06);
+}
+
+.cal-cell.today {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+    background: rgba(245,166,35,.08);
+}
+
+.cal-daynum { font-size: .85rem; font-weight: 600; }
+.cal-dots { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.section-label {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
     color: var(--muted);
+    margin: 18px 0 8px;
+}
+
+.section-label:first-child { margin-top: 0; }
+
+.day-event {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.day-event:last-child { border-bottom: none; }
+.day-event h4 { margin: 4px 0 6px; font-size: .98rem; }
+
+.type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.type-badge.homework { background: rgba(59,111,237,.15); color: var(--primary); }
+.type-badge.assessment { background: rgba(244,91,105,.15); color: var(--danger); }
+.type-badge.event { background: rgba(245,166,35,.15); color: var(--accent); }
+
+/* ---- Assessments ---- */
+.assessment-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.assessment-item:last-child { border-bottom: none; }
+
+.assessment-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(244,91,105,.15);
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.assessment-desc {
+    color: var(--muted);
+    font-size: .82rem;
+    margin-top: 4px;
+}
+
+/* ---- Homework alert badges ---- */
+.hw-alert-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: .68rem;
+    font-weight: 700;
+    background: var(--surface-2);
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.hw-alert-badge.overdue { background: rgba(244,91,105,.15); color: var(--danger); }
+.hw-alert-badge.due-soon { background: rgba(245,166,35,.15); color: var(--accent); }
+.hw-alert-badge.complete { background: rgba(62,207,142,.15); color: var(--success); }
+
+/* ---- Stat rows (principal overview) ---- */
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
     font-size: .88rem;
-    line-height: 1.5;
-    margin: 12px 0;
 }
+
+.stat-row:last-child { border-bottom: none; }
+.stat-row span { color: var(--muted); }
+.stat-row strong { font-family: var(--font-display); }
+
+/* ---- Bus badge icon (sidebar + roster) ---- */
+.bus-badge-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    flex-shrink: 0;
+    cursor: default;
+    transition: transform .15s, box-shadow .15s;
+}
+
+button.bus-badge-icon { cursor: pointer; }
+button.bus-badge-icon:hover { transform: scale(1.08); }
+
+.bus-badge-icon.active {
+    background: rgba(62,207,142,.18);
+    border-color: var(--success);
+    color: var(--success);
+    box-shadow: 0 0 0 3px rgba(62,207,142,.12);
+}
+
+#sidebarBadgeSlot { margin-left: auto; }
 
 /* ---- Timetable ---- */
 .timetable-toolbar {
@@ -357,9 +657,17 @@
     padding: 20px;
 }
 
-.hw-card h4 {
-    font-size: 1rem;
+.hw-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.hw-card-head h4 {
+    font-size: 1rem;
+    margin: 0;
 }
 
 .hw-meta {
@@ -371,6 +679,31 @@
 .hw-desc {
     margin: 12px 0;
     line-height: 1.6;
+}
+
+.hw-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    cursor: pointer;
+    font-size: .88rem;
+    font-weight: 600;
+}
+
+.hw-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--success);
+    cursor: pointer;
+}
+
+.hw-complete {
+    opacity: .6;
+}
+
+.hw-complete h4 {
+    text-decoration: line-through;
 }
 
 /* ---- Messages ---- */
@@ -385,6 +718,15 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.messages-thread-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
 }
 
 .messages-list {
@@ -407,13 +749,33 @@
     padding: 14px;
     text-align: left;
     color: var(--text);
+    cursor: pointer;
 }
 
 .message-row:hover { background: var(--surface-2); }
 .message-row:last-child { border-bottom: none; }
+.message-row.selected { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--primary); }
 
 .message-row-body {
     flex: 1;
+    min-width: 0;
+}
+
+.message-row-body p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.unread-count {
+    background: var(--primary);
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    flex-shrink: 0;
 }
 
 .thread-head {
@@ -425,9 +787,75 @@
     border-bottom: 1px solid var(--border);
 }
 
-.thread-msg p {
-    line-height: 1.7;
+.thread-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-bottom: 16px;
 }
+
+.thread-bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: .9rem;
+}
+
+.thread-bubble.theirs {
+    align-self: flex-start;
+    background: var(--surface-2);
+    border-bottom-left-radius: 4px;
+}
+
+.thread-bubble.mine {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.bubble-subject {
+    font-weight: 700;
+    font-size: .8rem;
+    margin-bottom: 4px;
+}
+
+.bubble-body {
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.bubble-time {
+    font-size: .68rem;
+    opacity: .65;
+    margin-top: 4px;
+}
+
+.reply-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.reply-form textarea {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: .9rem;
+    resize: vertical;
+}
+
+.reply-form .btn { align-self: flex-end; }
 
 /* ---- Bus Badge ---- */
 .badge-status-card {
@@ -538,6 +966,10 @@
 }
 
 .modal-panel-sm { max-width: 400px; }
+
+.modal-panel.zoom-in {
+    animation: zoomIn .38s cubic-bezier(.2, .8, .2, 1) both;
+}
 
 .modal-head {
     display: flex;
@@ -706,6 +1138,19 @@
     font-size: .9rem;
 }
 
+.link-form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.link-form-row .select-input {
+    flex: 1;
+    min-width: 160px;
+    height: 42px;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 960px) {
     .messages-shell { grid-template-columns: 1fr; }
@@ -733,4 +1178,9 @@
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(28px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(.85); }
+    to { opacity: 1; transform: scale(1); }
 }
