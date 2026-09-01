@@ -49,8 +49,8 @@
         so nothing important gets lost between apps, group chats, and paper diaries.
     </p>
     <div class="hero-actions fade-up">
-        <a href="login.html" class="btn btn-primary" id="heroCta">
-            <i class="fa-solid fa-right-to-bracket"></i> <span id="heroCtaText">View the demo</span>
+        <a href="login.html" class="btn btn-primary">
+            <i class="fa-solid fa-right-to-bracket"></i> View the demo
         </a>
     </div>
 </section>
@@ -84,17 +84,5 @@
 <!-- Supabase JS client - MUST be loaded before auth.js -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/auth.js"></script>
-<script>
-    // If already signed in, the hero CTA should go straight to the app
-    // instead of back through the login screen.
-    (async () => {
-        const session = await getSession();
-        if (session) {
-            const cta = document.getElementById("heroCta");
-            document.getElementById("heroCtaText").textContent = "Go to dashboard";
-            cta.href = "dashboard.html";
-        }
-    })();
-</script>
 </body>
 </html>

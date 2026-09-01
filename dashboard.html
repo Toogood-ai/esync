@@ -29,9 +29,9 @@
             <button class="dash-nav-item active" data-tab="home"><i class="fa-solid fa-house"></i> Home</button>
             <button class="dash-nav-item" data-tab="calendar"><i class="fa-solid fa-calendar-days"></i> Calendar</button>
             <button class="dash-nav-item" data-tab="timetable"><i class="fa-solid fa-clock"></i> Timetable</button>
+            <button class="dash-nav-item" data-tab="roster" data-role="teacher,principal"><i class="fa-solid fa-users-gear"></i> My class</button>
             <button class="dash-nav-item" data-tab="homework"><i class="fa-solid fa-book"></i> Homework</button>
             <button class="dash-nav-item" data-tab="messages"><i class="fa-solid fa-envelope"></i> Messages</button>
-            <button class="dash-nav-item" data-tab="badge"><i class="fa-solid fa-bus"></i> Bus badge</button>
             <button class="dash-nav-item" data-tab="profile"><i class="fa-solid fa-user"></i> Profile</button>
         </nav>
 
@@ -39,6 +39,7 @@
             <div class="user-chip" id="sidebarUserChip">
                 <span id="sidebarAvatarSlot"><span class="avatar">?</span></span>
                 <span id="sidebarName">Loading…</span>
+                <span id="sidebarBadgeSlot"></span>
             </div>
             <button class="btn btn-ghost btn-block" id="logoutBtn">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
@@ -58,44 +59,91 @@
 
         <!-- HOME -->
         <section class="tab-panel active" id="panel-home">
+            <div class="today-hero" id="todayHero"></div>
+            <div class="week-strip" id="weekStrip"></div>
+
             <div class="home-grid">
                 <div class="home-card">
-                    <h3><i class="fa-solid fa-calendar-check"></i> Today</h3>
-                    <div id="homeToday"></div>
+                    <h3><i class="fa-solid fa-file-pen"></i> Upcoming assessments</h3>
+                    <div id="homeAssessments"></div>
                 </div>
                 <div class="home-card">
-                    <h3><i class="fa-solid fa-book-open"></i> Your homework</h3>
-                    <div id="homeHomework"></div>
+                    <h3><i class="fa-solid fa-book-open"></i> Homework</h3>
+                    <div id="homeHomeworkAlerts"></div>
                 </div>
-                <div class="home-card">
-                    <h3><i class="fa-solid fa-bell"></i> Announcements</h3>
-                    <div id="homeAnnouncements"></div>
-                </div>
-                <div class="home-card" data-role="teacher">
+                <div class="home-card" data-role="teacher,principal">
                     <h3><i class="fa-solid fa-users-class"></i> Your class</h3>
                     <div id="homeClass"></div>
+                </div>
+                <div class="home-card" data-role="principal">
+                    <h3><i class="fa-solid fa-school"></i> School overview</h3>
+                    <div id="homeSchoolStats"></div>
+                </div>
+                <div class="home-card" data-role="principal" style="grid-column:1 / -1;">
+                    <h3><i class="fa-solid fa-bus"></i> Bus badges — all students</h3>
+                    <input id="principalBadgeSearch" type="text" placeholder="Search students…" class="search-input">
+                    <div id="principalBadgeList" class="badge-list"></div>
+                </div>
+                <div class="home-card" data-role="principal" style="grid-column:1 / -1;">
+                    <h3><i class="fa-solid fa-user-pen"></i> Manage names</h3>
+                    <p class="muted-note" style="margin-bottom:12px;">Only you can rename an account. Everyone else can only change their own profile picture.</p>
+                    <input id="adminNameSearch" type="text" placeholder="Search everyone…" class="search-input">
+                    <div id="adminNameList" class="badge-list"></div>
                 </div>
             </div>
         </section>
 
-        <!-- CALENDAR (Excursions/Events) -->
+        <!-- CALENDAR -->
         <section class="tab-panel" id="panel-calendar">
             <div class="calendar-toolbar">
-                <button class="btn btn-primary" id="calAddBtn" data-role="teacher">
-                    <i class="fa-solid fa-plus"></i> Add excursion
-                </button>
+                <div class="cal-nav">
+                    <button class="btn btn-ghost btn-icon" id="calPrevBtn" aria-label="Previous month"><i class="fa-solid fa-chevron-left"></i></button>
+                    <h2 id="calMonthLabel">Month</h2>
+                    <button class="btn btn-ghost btn-icon" id="calNextBtn" aria-label="Next month"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <button class="btn btn-primary" id="calTodayBtn"><i class="fa-solid fa-calendar-day"></i> Today</button>
             </div>
-            <div id="excursionsList" class="excursions-list"></div>
+            <div class="cal-legend">
+                <span><i class="dot excursion"></i> Event/note</span>
+                <span><i class="dot homework"></i> Homework due</span>
+                <span><i class="dot assessment"></i> Assessment</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
         </section>
 
         <!-- TIMETABLE -->
         <section class="tab-panel" id="panel-timetable">
             <div class="timetable-toolbar">
-                <button class="btn btn-primary" id="ttEditBtn" data-role="teacher">
+                <button class="btn btn-primary" id="ttEditBtn" data-role="teacher,principal">
                     <i class="fa-solid fa-edit"></i> Edit timetable
                 </button>
             </div>
             <div class="timetable-grid" id="timetableGrid"></div>
+        </section>
+
+        <!-- MY CLASS (roster + parent links) -->
+        <section class="tab-panel" id="panel-roster">
+            <div class="home-grid">
+                <div class="panel-card">
+                    <h3><i class="fa-solid fa-user-plus"></i> Add students</h3>
+                    <input id="rosterSearch" type="text" placeholder="Search students…" class="search-input">
+                    <div id="availableStudents" class="badge-list"></div>
+                </div>
+                <div class="panel-card">
+                    <h3><i class="fa-solid fa-users"></i> Your class roster</h3>
+                    <div id="currentRoster" class="badge-list"></div>
+                </div>
+            </div>
+            <div class="panel-card" style="margin-top:20px;">
+                <h3><i class="fa-solid fa-link"></i> Link a parent to a student</h3>
+                <p class="muted-note" style="margin-bottom:14px;">This is what lets a parent see their child's homework and bus badge status.</p>
+                <div class="link-form-row">
+                    <select id="linkParentSelect" class="select-input"></select>
+                    <select id="linkStudentSelect" class="select-input"></select>
+                    <button class="btn btn-primary btn-sm" id="addLinkBtn"><i class="fa-solid fa-link"></i> Link</button>
+                </div>
+                <div id="parentLinksList" class="badge-list" style="margin-top:16px;"></div>
+            </div>
         </section>
 
         <!-- HOMEWORK -->
@@ -112,7 +160,7 @@
         <section class="tab-panel" id="panel-messages">
             <div class="messages-shell">
                 <div class="messages-list-col">
-                    <button class="btn btn-primary btn-block" id="newMessageBtn" data-role="teacher">
+                    <button class="btn btn-primary btn-block" id="newMessageBtn" data-role="teacher,principal">
                         <i class="fa-solid fa-pen"></i> Send message
                     </button>
                     <div id="messagesList" class="messages-list"></div>
@@ -121,11 +169,6 @@
                     <p class="muted-note">Select a message to read it.</p>
                 </div>
             </div>
-        </section>
-
-        <!-- BUS BADGE -->
-        <section class="tab-panel" id="panel-badge">
-            <div id="badgeContent"></div>
         </section>
 
         <!-- PROFILE -->
@@ -152,13 +195,13 @@
 </div>
 
 <!-- MODALS -->
-<div class="modal-overlay" id="excursionModal">
+<div class="modal-overlay" id="dayModal">
     <div class="modal-panel">
         <div class="modal-head">
-            <h3>Add excursion</h3>
-            <button class="modal-close" id="excursionModalClose"><i class="fa-solid fa-xmark"></i></button>
+            <h3 id="dayModalTitle">Day</h3>
+            <button class="modal-close" id="dayModalClose"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="modal-body" id="excursionModalBody"></div>
+        <div class="modal-body" id="dayModalBody"></div>
     </div>
 </div>
 
@@ -207,9 +250,11 @@
 <script src="js/dashboard.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/timetable.js"></script>
+<script src="js/roster.js"></script>
 <script src="js/homework.js"></script>
 <script src="js/messages.js"></script>
 <script src="js/badges.js"></script>
+<script src="js/admin.js"></script>
 <script src="js/profile.js"></script>
 </body>
 </html>
